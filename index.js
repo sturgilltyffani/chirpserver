@@ -1,10 +1,10 @@
 var express = require("express");
-var base = 'api/posts';
+var base = '/api/chirps';
 var app = express();
 var path = require("path");
 var fs = require("fs");
 var bp = require("body-parser");
-var ID = require("shortid");
+var shortid = require("shortid");
 var dataPath = path.join(__dirname, 'data.json');
 
 app
@@ -18,41 +18,65 @@ app
 })
     .use(bp.json())
     .use(bp.urlencoded({ extended: true }));
-app.get(base, function (req, res) {
-    fs.readFile(dataPath, 'utf-8', function (error, content) {
-        res.send(content);
-    });
-});
+    
+app.route('/api/chirps')
+    .get(function (req, res) {
+        fs.readFile(dataPath, 'utf-8', function (error, content) {
+       
+            res.send(content);
+        });
+    })
 
-app.post(base, function(req, res) {
+    .post(function(req, res) {
     fs.readFile(dataPath, 'utf-8', function (error, content) {
         var jsonContent = JSON.parse(content);
         var chirp = req.body;
-        var id = ID.generate();
+        var id = shortid.generate();
         chirp.id = id; 
-        fp.push(chirp);
-        fs.writeFile(dataPath, JSON.stringify(fp), function (error) {
+        jsonContent.push(chirp);
+        fs.writeFile(dataPath, JSON.stringify(jsonContent), function (error) {
             if (error)
                 throw error;
-            res.status().send(id).end();
+            res.status(201).send(chirp).end();
         });
     });
 
 });
 
 app.get(base + "/:id", function(req, res) {
-    //do something
-
-});
-
-app.post(function(req, res) {
-    //do something 
-
+    fs.readFile(dataPath, 'utf-8', function (error, content) {
+        var jsonContent = JSON.parse(content);
+        var found = jsonContent.filter(function (post) { return post.id === req.params.id; });
+        if (found.length !== 1) {
+            res.status(404).end();
+            return;
+        }
+        var post = JSON.stringify(found[0]);
+        res.send(post).end();
+    });
 });
 
 app.delete(base + "/:id", function(req, res) {
-    //do something
-
+    fs.readFile(dataPath, 'utf-8', function (error, content) {
+        var jsonContent = JSON.parse(content);
+        var foundIndex = -1;
+        jsonContent.map(function (post, i) {
+            if (post.id === req.params.id) {
+                foundIndex = i;
+            }
+        });
+        if (foundIndex === -1) {
+            res.status(404).end();
+            return;
+        }
+        jsonContent.splice(foundIndex, 1);
+        fs.writeFile(dataPath, JSON.stringify(jsonContent), 'utf-8', function (error) {
+            if (error)
+                throw error;
+            console.error(error);
+            res.status(202).end();
+        });
+    });
 });
 
 app.listen(3000, function () {
