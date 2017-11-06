@@ -43,20 +43,21 @@ app.route('/api/chirps')
 
 });
 
-app.get(base + "/:id", function(req, res) {
-    fs.readFile(dataPath, 'utf-8', function (error, content) {
-        var jsonContent = JSON.parse(content);
-        var found = jsonContent.filter(function (post) { return post.id === req.params.id; });
-        if (found.length !== 1) {
-            res.status(404).end();
-            return;
-        }
-        var post = JSON.stringify(found[0]);
-        res.send(post).end();
-    });
-});
+app.route('/api/chirps/:id')
+    .get(function(req, res) {
+        fs.readFile(dataPath, 'utf-8', function (error, content) {
+            var jsonContent = JSON.parse(content);
+            var found = jsonContent.filter(function (post) { return post.id === req.params.id; });
+            if (found.length !== 1) {
+                res.status(404).end();
+                return;
+            }
+            var post = JSON.stringify(found[0]);
+            res.send(post).end();
+        });
+    })
 
-app.delete(base + "/:id", function(req, res) {
+    .delete(function(req, res) {
     fs.readFile(dataPath, 'utf-8', function (error, content) {
         var jsonContent = JSON.parse(content);
         var foundIndex = -1;
